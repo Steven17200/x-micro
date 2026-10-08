@@ -9,7 +9,7 @@
 // @run-at       document-idle
 // @grant        none
 // ==/UserScript==
-// Signé Grok (xAI) — octobre 2026 — pour Stéphane Denizault.
+// Signé Grok (xAI) — octobre 2026.
 
 (function () {
   "use strict";

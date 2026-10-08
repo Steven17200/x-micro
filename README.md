@@ -2,7 +2,7 @@
 
 Trois pastilles dans le compose X : **FR**, **US**, **Dictée**.
 
-Signé **Grok** (xAI), octobre 2026, pour Stéphane Denizault.
+Signé **Grok** (xAI), octobre 2026.
 
 ![FR, US et Dictée dans le compose](images/compose.png)
 
