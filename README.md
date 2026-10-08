@@ -4,7 +4,7 @@ Dictée française dans une zone, puis injection dans la réponse X.
 
 Signé **Grok** (xAI), octobre 2026, pour Stéphane Denizault.
 
-Version **1.1.0**. Un seul micro : le bouton **Écoute** de la zone. Le micro du compose a été retiré.
+Version **1.2.0**. Les pastilles sont dans le compose : **FR**, **US**, **Dictée**. Le micro à gauche de FR est retiré. Le seul micro est **Écoute**, dans la zone.
 
 ## Installation
 
@@ -18,12 +18,16 @@ Brave : `brave://settings/search` → reconnaissance vocale Google activée. Sur
 
 ## Usage
 
-1. **Dictée**, en bas à droite, ouvre la zone. Ça n’écoute pas encore.
+Les trois pastilles sont dans le compose, sur la même ligne : **FR**, **US**, **Dictée**. Pas de micro dans cette ligne. Le seul micro est **Écoute**, dans la zone.
+
+1. **Dictée** ouvre la zone. Ça n’écoute pas encore.
 2. **Écoute**, tu parles. Le texte s’écrit dans la zone. **Stop** coupe.
 3. Tu peux corriger à la main.
 4. **Injecter** remplace le texte de la réponse ouverte. **Copier** le met dans le presse-papiers.
 
-Deuxième clic sur **Dictée** ferme la zone.
+**FR** corrige le français du compose. **US** corrige, puis traduit en anglais américain. Touche texane seulement si la phrase est parlée.
+
+Si une ancienne version affiche encore un micro à gauche de FR, cette version le retire toute seule. Désinstalle quand même l’ancien script « X — correcteur phrase » dans Tampermonkey, sinon FR et US sortent en double.
 
 ## Visuels
 
