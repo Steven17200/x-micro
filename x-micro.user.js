@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         X — micro
 // @namespace    https://denizault.local/x-micro
-// @version      1.2.0
-// @description  FR, US et Dictée dans le compose. Le micro de gauche est retiré. Un seul micro : Écoute.
+// @version      1.3.0
+// @description  FR, US et Dictée dans le compose. FR corrige vraiment (règles + LanguageTool). Le micro de gauche est retiré. Un seul micro : Écoute.
 // @author       Grok (xAI)
 // @match        https://x.com/*
 // @match        https://twitter.com/*
 // @run-at       document-idle
 // @grant        none
+// @connect      api.languagetool.org
+// @connect      api.mymemory.translated.net
 // ==/UserScript==
 // Signé Grok (xAI) — octobre 2026.
 
@@ -48,7 +50,7 @@
     return (el.innerText || el.textContent || "").replace(/\u00a0/g, " ").trim();
   }
 
-  function corrige(src) {
+  function localFix(src) {
     let t = src.replace(/\r\n/g, "\n");
     t = t.replace(/[ \t]+\n/g, "\n");
     t = t.replace(/\n{3,}/g, "\n\n");
@@ -78,12 +80,65 @@
       [/\bmalgrés\b/gi, "malgré"],
       [/\bconnection\b/gi, "connexion"],
       [/\baddresse\b/gi, "adresse"],
+      [/\bNvdia\b/g, "Nvidia"],
+      [/\bNv dia\b/g, "Nvidia"],
+      [/\bles ingénieur\b/gi, "les ingénieurs"],
+      [/\bdes ingénieur\b/gi, "des ingénieurs"],
+      [/\btu oublie\b/gi, "tu oublies"],
+      [/\bUn choses certaine\b/g, "Une chose est certaine"],
+      [/\bun choses certaine\b/g, "une chose est certaine"],
+      [/\bune choses\b/gi, "une chose"],
+      [/\bne serait pas ce qui sont\b/gi, "ne seraient pas ce qu'ils sont"],
+      [/\bne serait pas ce qu'ils sont\b/gi, "ne seraient pas ce qu'ils sont"],
+      [/\bpersonnes visionaire\b/gi, "personnes visionnaires"],
+      [/\bvisionaire\b/gi, "visionnaire"],
+      [/\bvisionaires\b/gi, "visionnaires"],
     ];
     for (const [re, to] of rules) t = t.replace(re, to);
+    t = t.replace(/\bpersonnes visionnaire\b/gi, "personnes visionnaires");
     t = t.replace(/\s+([,.;])/g, "$1");
     t = t.replace(/([:;!?])(?=\S)/g, "$1 ");
     t = t.replace(/[ \t]{2,}/g, " ");
     return t.trim();
+  }
+
+  function applyMatches(text, matches) {
+    const ok = /^(TYPOS|GRAMMAR|CONFUSED_WORDS|MULTITOKEN_SPELLING|COMPOUNDING|CASING)$/;
+    const list = (matches || []).filter((m) => {
+      const rep = m.replacements && m.replacements[0] && m.replacements[0].value;
+      if (!rep || rep === text.slice(m.offset, m.offset + m.length)) return false;
+      if (/^\.\.\.|\[/.test(rep)) return false;
+      const id = (m.rule && (m.rule.category && m.rule.category.id)) || "";
+      return ok.test(id);
+    });
+    list.sort((a, b) => b.offset - a.offset);
+    let out = text;
+    for (const m of list) {
+      const rep = m.replacements[0].value;
+      out = out.slice(0, m.offset) + rep + out.slice(m.offset + m.length);
+    }
+    return out.replace(/[ \t]{2,}/g, " ").trim();
+  }
+
+  function languageTool(text) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "https://api.languagetool.org/v2/check");
+      xhr.timeout = 12000;
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (!data || !Array.isArray(data.matches)) reject(new Error("vide"));
+          else resolve(applyMatches(text, data.matches));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      xhr.onerror = () => reject(new Error("réseau"));
+      xhr.ontimeout = () => reject(new Error("timeout"));
+      xhr.send("language=fr&enabledOnly=false&text=" + encodeURIComponent(text.slice(0, 1800)));
+    });
   }
 
   function spoken(src) {
@@ -138,7 +193,7 @@
     const box = document.createElement("div");
     box.id = PANEL_ID;
     box.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:2147483647;width:min(380px,calc(100vw - 32px));background:#000;color:#e7e9ea;border:1px solid #2f3336;border-radius:12px;padding:10px;font:13px/1.35 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.5)";
-    box.innerHTML = '<div style="font-weight:700;margin-bottom:6px"></div><textarea style="width:100%;box-sizing:border-box;min-height:84px;background:#16181c;color:#e7e9ea;border:1px solid #2f3336;border-radius:8px;padding:6px;resize:vertical"></textarea><div style="display:flex;gap:6px;margin-top:6px;align-items:center"><button type="button" data-act="copy" style="background:#eff3f4;color:#0f1419;border:0;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">Copier</button><button type="button" data-act="inject" style="background:#1d9bf0;color:#fff;border:0;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">Injecter</button><button type="button" data-act="close" style="margin-left:auto;background:transparent;color:#71767b;border:0;cursor:pointer;font-size:12px">Fermer</button></div><div data-act="status" style="margin-top:4px;color:#71767b;font-size:11px"></div>';
+    box.innerHTML = '<div style="font-weight:700;margin-bottom:6px"></div><textarea style="width:100%;box-sizing:border-box;min-height:84px;background:#16181c;color:#e7e9ea;border:1px solid #2f3336;border-radius:8px;padding:6px;resize:vertical"></textarea><div style="display:flex;gap:6px;margin-top:6px;align-items:center"><button type="button" data-act="copy" style="background:#eff3f4;color:#0f1419;border:0;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">Copier</button><button type="button" data-act="inject" style="background:#1d9bf0;color:#fff;border:0;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer">Remplacer</button><button type="button" data-act="close" style="margin-left:auto;background:transparent;color:#71767b;border:0;cursor:pointer;font-size:12px">Fermer</button></div><div data-act="status" style="margin-top:4px;color:#71767b;font-size:11px"></div>';
     box.querySelector("div").textContent = title;
     const area = box.querySelector("textarea");
     const status = box.querySelector("[data-act=status]");
@@ -162,7 +217,7 @@
       if (!area.value.trim()) { status.textContent = "Zone vide."; return; }
       if (!live) { status.textContent = "Ouvre une réponse X d’abord."; return; }
       setText(live, area.value.trim());
-      status.textContent = "Injecté.";
+      status.textContent = "Remplacé.";
     });
     box.querySelector("[data-act=close]").addEventListener("click", (ev) => {
       halt(ev);
@@ -183,7 +238,7 @@
     if (rec) {
       stopRec();
       micBtn.textContent = "Écoute";
-      status.textContent = "Stop. Corrige la zone, puis Injecter.";
+      status.textContent = "Stop. Corrige la zone, puis Remplacer.";
       return;
     }
     const r = new Ctor();
@@ -231,7 +286,7 @@
   }
 
   function openDictee() {
-    const ui = textPanel("Dictée", "", "Clique Écoute, parle, puis Injecter.");
+    const ui = textPanel("Dictée", "", "Clique Écoute, parle, puis Remplacer.");
     const row = ui.area.nextElementSibling;
     const listen = document.createElement("button");
     listen.type = "button";
@@ -253,20 +308,35 @@
     return b;
   }
 
-  function onFR() {
+  async function onFR() {
     const live = composer();
     const src = live ? readText(live) : "";
     if (!src) return;
-    textPanel("Français corrigé", corrige(src), "Orthographe et typo. Ton oral gardé.");
+    const local = localFix(src);
+    const ui = textPanel("Français corrigé", local, "Règles locales. LanguageTool…");
+    try {
+      const out = await languageTool(local);
+      if (!ui.area.isConnected) return;
+      ui.area.value = out;
+      ui.status.textContent = out === local
+        ? "Orthographe et typo. Ton oral gardé. LanguageTool : rien de plus."
+        : "Orthographe et typo. Ton oral gardé. LanguageTool appliqué.";
+    } catch (e) {
+      if (!ui.status.isConnected) return;
+      ui.status.textContent = "Orthographe et typo. Ton oral gardé. LanguageTool injoignable, règles locales seulement.";
+    }
   }
 
   async function onUS(btn) {
     const live = composer();
     const src = live ? readText(live) : "";
     if (!src) return;
-    const fixed = corrige(src);
+    let fixed = localFix(src);
     const prev = btn.textContent;
     btn.textContent = "…";
+    try {
+      fixed = await languageTool(fixed);
+    } catch (e) {}
     try {
       const en = await translate(fixed);
       const out = texan(en, src);
