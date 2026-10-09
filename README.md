@@ -20,9 +20,11 @@ Brave : `brave://settings/search` → reconnaissance vocale Google activée. Sur
 
 Lit la phrase déjà écrite dans la réponse.
 
-Corrige l’orthographe et la typo française : accords, à/a, ce/se, espace avant la virgule, majuscule après un point. Le ton oral reste. Pas de « ne » ajouté, pas de formule lisse.
+Règles locales d’abord (accords fréquents, à/a, ce/se, Nvdia, visionnaire, espace avant la virgule). Puis LanguageTool, catégories grammaire / typo / confusion seulement. Le ton oral reste. Pas de formule lisse.
 
-Le résultat s’ouvre dans une zone. **Copier** ou **Injecter** dans la réponse.
+Le résultat s’ouvre dans une zone. **Copier** ou **Remplacer** dans la réponse.
+
+Si LanguageTool est bloqué par x.com, les règles locales restent.
 
 ## US — traduction
 
@@ -30,18 +32,19 @@ Même correction d’abord, puis traduction en anglais américain.
 
 Phrase neutre : anglais US standard. Phrase parlée (ouais, veut pas, merde…) : touche texane légère, y'all, fixin' to, wanna. Une seule touche, pas les deux.
 
-Le résultat s’ouvre dans la même zone. **Copier** ou **Injecter**.
+Le résultat s’ouvre dans la même zone. **Copier** ou **Remplacer**.
 
 ## Dictée
 
 **Dictée** ouvre une zone vide. Ça n’écoute pas tout seul.
 
-**Écoute**, tu parles en français, le texte s’écrit dans la zone. **Stop** coupe. Tu peux corriger à la main, puis **Injecter** ou **Copier**.
+**Écoute**, tu parles en français, le texte s’écrit dans la zone. **Stop** coupe. Tu peux corriger à la main, puis **Remplacer** ou **Copier**.
 
 Le seul micro est ce bouton **Écoute**. Rien dans la ligne des pastilles.
 
 ## Technique
 
-- Version 1.2.0. `@grant none`, sinon la dictée n’existe pas dans Tampermonkey.
+- Version 1.3.0. `@grant none`, sinon la dictée n’existe pas dans Tampermonkey.
+- LanguageTool : `api.languagetool.org`, appel page, pas de clé.
 - Langue de reconnaissance : `fr-FR`.
-- Le texte ne part dans X qu’au clic **Injecter**.
+- Le texte ne part dans X qu’au clic **Remplacer**.
